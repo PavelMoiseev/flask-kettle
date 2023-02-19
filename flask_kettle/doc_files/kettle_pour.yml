@@ -1,0 +1,14 @@
+Налейте воды в чайник и укажите её температуру
+---
+parameters:
+  - in: formData
+    name: WATER_LEVEL
+    type: number
+    format: float
+    description: "The amount of water to pour into the kettle"
+    required: true
+  - in: formData
+    name: STARTING_TEMPERATURE
+    type: integer
+    description: "The starting temperature of the water in the kettle"
+    required: true
