@@ -16,8 +16,8 @@ swagger = Swagger(app, template=template)
 
 logging.basicConfig(filename="kettle.log", level=logging.INFO)
 
-is_on = False               # Статус: включен/выключен
-is_paused = False           # Стату паузы
+IS_ON = False               # Статус: включен/выключен
+IS_PAUSED = False           # Стату паузы
 
 # Получение параметров чайника
 with open("config.json", "r") as f:
@@ -34,9 +34,9 @@ def log_status(status):
     app.logger.info(status)
 
 def boil():
-    global is_on, is_paused, water_level, STARTING_TEMPERATURE
-    while is_on:
-        if not is_paused:
+    global IS_ON, IS_PAUSED, WATER_LEVEL, STARTING_TEMPERATURE
+    while IS_ON:
+        if not IS_PAUSED:
             if STARTING_TEMPERATURE < SWITCH_OFF_TEMPERATURE:
                 STARTING_TEMPERATURE += SWITCH_OFF_TEMPERATURE / BOILING_TIME
                 status = f"Температура повышается, текущая температура: {STARTING_TEMPERATURE}"
@@ -52,15 +52,35 @@ def boil():
             time.sleep(1)
 
 
+@app.route("/", methods=["GET"])
+def api_overview():
+    """
+    API Overview
+    ---
+    responses:
+        200:
+            description: Обзор API
+    """
+    data = {
+            "GET Swagger документация": "/apidocs",
+            "POST Залить воды в чайник и указать начальную температуру": "/pour",
+            "GET Начать кипячение": "/start",
+            "GET Поставить кипячение на паузу": "/pause",
+            "GET Возобновить кипячение": "/resume",
+            "GET Выключить чайник": "/stop",
+        }
+    return jsonify(data)
+
+
 @app.route("/pour", methods=["POST"])
 @swag_from('doc_files/kettle_pour.yml')
 def kettle_pour():     
-    global water_level, STARTING_TEMPERATURE
-    water_level_request = float(request.form["water_level"])
+    global WATER_LEVEL, STARTING_TEMPERATURE
+    water_level_request = float(request.form["WATER_LEVEL"])
     STARTING_TEMPERATURE = int(request.form["STARTING_TEMPERATURE"])
     if 0.0 <= water_level_request <= WATER_VOLUME:
         WATER_LEVEL = water_level_request
-        status = f"{water_level} л. сейчас в чайнике! Температура воды {STARTING_TEMPERATURE} градусов"
+        status = f"{WATER_LEVEL} л. сейчас в чайнике! Температура воды {STARTING_TEMPERATURE} градусов"
         log_status(status)
         add_status_to_db(status)
         return jsonify({"message": status})
@@ -80,13 +100,13 @@ def start_boil():
         200:
             description: Кипячение началось!
     """
-    global is_on, water_level
+    global IS_ON, WATER_LEVEL
     if WATER_LEVEL <= 0:
         status = "Попытка включить пустой чайник!"
         log_status(status)
         add_status_to_db(status)
         return jsonify({"message": status})
-    is_on = True
+    IS_ON = True
     t = threading.Thread(target=boil)
     t.start()
     status = "Начало кипячения!"
@@ -104,8 +124,8 @@ def pause_boil():
         200:
             description: Пауза!
     """
-    global is_paused
-    is_paused = True
+    global IS_PAUSED
+    IS_PAUSED = True
     status = "Процесс закипания поставлен на паузу!"
     log_status(status)
     add_status_to_db(status)
@@ -121,8 +141,8 @@ def resume_boil():
         200:
             description: Кипячение!
     """
-    global is_paused
-    is_paused = False
+    global IS_PAUSED
+    IS_PAUSED = False
     status = "Процесс закипания продолжается!"
     log_status(status)
     add_status_to_db(status)

@@ -1,5 +1,5 @@
 {
     "water_volume": 4.0,
-    "boiling_time": 3,
+    "boiling_time": 10,
     "switch_off_temperature": 100
 }
