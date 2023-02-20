@@ -107,11 +107,11 @@ def start_boil():
         add_status_to_db(status)
         return jsonify({"message": status})
     IS_ON = True
-    t = threading.Thread(target=boil)
-    t.start()
     status = "Начало кипячения!"
     log_status(status)
     add_status_to_db(status)
+    t = threading.Thread(target=boil)
+    t.start()
     return jsonify({"message": status})
 
 
